@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>EcoHuella</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--v:#2C5F2D;--v2:#3d7a3e;--m:#97BC62;--cr:#F5F1E8;--ca:#5C3D11;--bl:#FAFAF7;--gr:#6B7280;--ro:#C0392B;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--v);overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;color:#1a1a1a;max-width:430px;margin:0 auto;background:var(--bl);height:100vh;display:flex;flex-direction:column;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes scanline{0%,100%{top:8px;}50%{top:calc(100% - 12px);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+@keyframes barfill{to{width:100%;}}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,var(--v) 0%,#1a3d1b 55%,var(--ca) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s ease,transform .6s ease;}
+#splash.hide{opacity:0;transform:scale(1.04);pointer-events:none;}
+.sp-leaf{font-size:80px;animation:float 2s ease-in-out infinite;}
+.sp-title{font-family:'Playfair Display',serif;font-size:44px;font-weight:900;color:var(--cr);margin:14px 0 4px;letter-spacing:-1px;}
+.sp-sub{color:var(--m);font-size:11px;letter-spacing:3px;text-transform:uppercase;}
+.sp-bar{margin-top:52px;width:56px;height:3px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;}
+.sp-fill{height:100%;background:var(--m);width:0;animation:barfill 2s ease forwards;}
+
+/* ── PANTALLAS ── */
+#pg-auth{display:flex;flex-direction:column;flex:1;overflow-y:auto;background:linear-gradient(160deg,var(--v) 0%,#1a3d1b 52%,var(--ca) 100%);justify-content:center;align-items:center;padding:28px 22px;}
+#pg-main{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#pg-main.on{display:flex;}
+
+/* ── AUTH CARD ── */
+.alogo{text-align:center;margin-bottom:24px;}
+.alogo h1{font-family:'Playfair Display',serif;font-size:38px;font-weight:900;color:var(--cr);}
+.alogo p{color:var(--m);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.acard{background:#fff;border-radius:24px;padding:22px 20px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.3);}
+.atabs{display:flex;gap:4px;background:#eee;border-radius:12px;padding:4px;margin-bottom:16px;}
+.atab{flex:1;padding:10px;text-align:center;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;color:var(--gr);border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.atab.act{background:var(--v);color:#fff;}
+.apanel{display:none;}
+.apanel.act{display:block;}
+.fld{margin-bottom:12px;}
+.fld label{display:block;font-size:12px;font-weight:700;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;}
+.fld input{width:100%;padding:14px 16px;border:2px solid #ddd;border-radius:12px;font-size:16px;font-family:'DM Sans',sans-serif;background:#fff;color:#1a1a1a;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s;}
+.fld input:focus{border-color:var(--v);}
+.errmsg{display:none;background:#fee2e2;color:#b91c1c;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:12px;border-left:3px solid var(--ro);}
+.errmsg.show{display:block;}
+.abtn{display:block;width:100%;padding:15px;background:var(--v);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-appearance:none;margin-top:2px;}
+.abtn:active{opacity:.85;}
+.abtn.sec{background:#f0f0ea;color:var(--v);font-size:14px;padding:12px;margin-top:10px;}
+
+/* ── HEADER ── */
+.hdr{padding:14px 18px 10px;background:#fff;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hav{width:36px;height:36px;border-radius:50%;background:var(--v);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.hgr{font-size:11px;color:var(--gr);}.hnm{font-size:16px;font-weight:700;}
+.nbtn{width:36px;height:36px;border-radius:50%;background:#f0f0ea;border:none;cursor:pointer;font-size:17px;position:relative;display:flex;align-items:center;justify-content:center;}
+.ndot{position:absolute;top:5px;right:5px;width:8px;height:8px;background:var(--ro);border-radius:50%;border:2px solid #fff;}
+
+/* ── CONTENIDO ── */
+.pgcontent{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;}
+.pgcontent::-webkit-scrollbar{display:none;}
+
+/* ── NAV ── */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid rgba(0,0,0,.07);display:flex;padding:7px 0 calc(7px + env(safe-area-inset-bottom));z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,.08);}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px 0;}
+.ni .icon{font-size:22px;transition:transform .2s;}.ni .lbl{font-size:10px;color:var(--gr);font-weight:500;}
+.ni.act .icon{transform:scale(1.18);}.ni.act .lbl{color:var(--v);font-weight:700;}
+
+/* ── HOME ── */
+.hero{margin:14px;border-radius:20px;background:linear-gradient(135deg,var(--v),var(--v2));padding:22px 18px;color:#fff;position:relative;overflow:hidden;}
+.hero::after{content:'🌿';position:absolute;right:-8px;bottom:-18px;font-size:96px;opacity:.12;pointer-events:none;}
+.hero h2{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;margin-bottom:5px;}
+.hero p{font-size:13px;opacity:.85;line-height:1.5;}
+.srow{display:flex;gap:8px;margin-top:14px;}
+.sbadge{background:rgba(255,255,255,.18);border-radius:50px;padding:6px 14px;display:flex;align-items:center;gap:6px;}
+.snum{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;}.slbl{font-size:11px;opacity:.8;}
+.sec{font-size:17px;font-weight:700;padding:14px 14px 8px;}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px;}
+.qcard{background:#fff;border:1.5px solid #e8e8e0;border-radius:16px;padding:14px 12px;cursor:pointer;}
+.qcard:active{background:#f5f5f0;}
+.qicon{font-size:28px;margin-bottom:8px;}.qtitle{font-size:13px;font-weight:600;}.qsub{font-size:11px;color:var(--gr);margin-top:2px;}
+.prow{display:flex;gap:12px;padding:0 14px 4px;overflow-x:auto;}.prow::-webkit-scrollbar{display:none;}
+.pcard{min-width:148px;background:#fff;border-radius:16px;border:1.5px solid #e8e8e0;padding:14px;cursor:pointer;flex-shrink:0;}
+.pcard:active{opacity:.85;}
+.pem{font-size:34px;margin-bottom:8px;}.pnm{font-size:13px;font-weight:600;}.psp{font-size:11px;color:var(--gr);margin-bottom:8px;}
+.hbar{height:5px;background:#e8e8e0;border-radius:3px;overflow:hidden;}
+.hbar-f{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--m),var(--v));}
+.hbar-t{font-size:10px;color:var(--gr);margin-top:4px;}
+.empty{text-align:center;padding:28px 14px;}.empty-i{font-size:48px;margin-bottom:12px;}.empty-t{font-size:14px;color:var(--gr);line-height:1.5;}
+.allist{padding:0 14px;display:flex;flex-direction:column;gap:10px;}
+.alcard{background:#fff;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;border:1.5px solid #e8e8e0;}
+.alicon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background:#EFF6FF;}
+.albadge{margin-left:auto;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:600;}
+.urg{background:#FEE2E2;color:var(--ro);}.hoy{background:#FEF3C7;color:#92400E;}.bien{background:#F0FDF4;color:#166534;}
+.tipcard{margin:0 14px 14px;background:linear-gradient(135deg,#f0f7f0,#e8f5e9);border-radius:16px;padding:16px;border-left:4px solid var(--v);}
+.tiplbl{font-size:10px;font-weight:700;color:var(--v);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.tiptxt{font-size:13px;color:#2a2a2a;line-height:1.5;}
+
+/* ── DIAGNÓSTICO ── */
+.dwrap{margin:0 14px 14px;border-radius:20px;overflow:hidden;border:1.5px solid #e8e8e0;background:#fff;}
+.camzone{position:relative;background:#0d0d0d;min-height:220px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:20px 20px 0 0;}
+.camph{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 20px;gap:8px;}
+.camph .ci{font-size:52px;}.camph .ct{font-size:16px;font-weight:700;color:#fff;}.camph .cs{font-size:13px;color:rgba(255,255,255,.5);line-height:1.5;max-width:220px;}
+#camvid{width:100%;display:block;object-fit:cover;max-height:320px;}
+#camprev{width:100%;display:block;object-fit:cover;max-height:320px;}
+#camcanvas{display:none;}
+.vfover{position:absolute;inset:0;pointer-events:none;}
+.vfc{position:absolute;width:26px;height:26px;border-color:#4eff91;border-style:solid;}
+.vfc.tl{top:12px;left:12px;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.vfc.tr{top:12px;right:12px;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.vfc.bl{bottom:12px;left:12px;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.vfc.br{bottom:12px;right:12px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.vfline{position:absolute;left:12px;right:12px;height:2px;background:linear-gradient(90deg,transparent,#4eff91,transparent);animation:scanline 2.2s ease-in-out infinite;}
+.vfbadge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#4eff91;font-size:11px;font-weight:700;padding:4px 12px;border-radius:50px;white-space:nowrap;}
+.camctrl{display:flex;gap:10px;padding:12px 14px;background:#f8f8f5;}
+.cbtn{flex:1;padding:13px 8px;border-radius:14px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;-webkit-appearance:none;}
+.cbtn:active{opacity:.8;}
+.cb-c{background:var(--v);color:#fff;}.cb-g{background:#f0f0ea;color:#1a1a1a;}
+.cb-x{background:#fee2e2;color:var(--ro);}.cb-s{background:var(--v);color:#fff;flex:2;}
+.cb-a{background:linear-gradient(135deg,#1a3d1b,var(--v2));color:#fff;flex:2;}.cb-r{background:#f0f0ea;color:#1a1a1a;}
+.aiload{display:none;flex-direction:column;align-items:center;gap:12px;padding:28px 20px;text-align:center;background:#f5fbf5;}
+.aiload.on{display:flex;}
+.aispin{font-size:40px;animation:spin 2s linear infinite;}
+.ait{font-size:16px;font-weight:700;color:var(--v);}.ais{font-size:13px;color:var(--gr);line-height:1.5;}
+.aisteps{display:flex;flex-direction:column;gap:6px;width:100%;}
+.aistep{font-size:12px;padding:7px 14px;border-radius:50px;background:#e8f5e9;color:var(--v);font-weight:600;text-align:center;transition:all .3s;}
+.aistep.cur{background:var(--v);color:#fff;animation:pulse 1s ease-in-out infinite;}
+.aistep.ok{background:#c8e6c9;color:#1b5e20;}
+.aibadge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a3d1b,var(--v2));color:#fff;border-radius:50px;padding:5px 14px;font-size:12px;font-weight:700;margin:4px 14px 12px;}
+.aidot{width:7px;height:7px;border-radius:50%;background:#4eff91;animation:pulse 1.2s ease-in-out infinite;}
+
+/* ── RESULTADO DIAGNÓSTICO ── */
+.rh{background:linear-gradient(135deg,var(--v),var(--v2));padding:20px;color:#fff;}
+.rplant{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;}
+.rsp{font-size:12px;opacity:.8;margin-top:2px;}
+.rscore{text-align:center;padding:18px;}
+.rsnum{font-family:'Space Mono',monospace;font-size:52px;font-weight:700;}
+.rslbl{font-size:12px;color:var(--gr);text-transform:uppercase;letter-spacing:1px;}
+.rb{padding:0 18px 18px;}
+.rst{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gr);margin:14px 0 7px;}
+.rcond{font-size:16px;font-weight:700;margin-bottom:4px;}.rcause{font-size:13px;color:var(--gr);line-height:1.5;}
+.dtag{display:inline-block;padding:4px 12px;border-radius:50px;font-size:12px;font-weight:600;margin:3px;}
+.tg{background:#F0FDF4;color:#166534;}.tr{background:#FEE2E2;color:var(--ro);}
+.axrow{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f0f0ea;}
+.axic{font-size:17px;flex-shrink:0;margin-top:1px;}.axtx{font-size:13px;color:#2a2a2a;line-height:1.5;}
+.rfull{font-size:13px;color:#2a2a2a;line-height:1.7;background:#f8f8f5;border-radius:12px;padding:14px;margin-top:6px;}
+.savebtn{width:calc(100% - 36px);margin:0 18px 18px;padding:14px;background:var(--v);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-appearance:none;}
+
+/* ── COMUNIDAD ── */
+.vcrd{margin:0 14px 12px;background:#fff;border-radius:16px;border:1.5px solid #e8e8e0;padding:15px;display:flex;gap:13px;}
+.vlogo{width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,var(--v),var(--m));display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.vnm{font-size:15px;font-weight:700;margin-bottom:3px;}.vesp{font-size:12px;color:var(--gr);margin-bottom:7px;}
+.vtags{display:flex;gap:5px;flex-wrap:wrap;}.vtag{padding:3px 10px;border-radius:50px;font-size:11px;font-weight:600;background:#f0f7f0;color:var(--v);}
+.vbtns{margin-top:9px;display:flex;gap:7px;}
+.vbtn{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--v);background:#fff;color:var(--v);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:4px;-webkit-appearance:none;}
+.vbtn.prim{background:var(--v);color:#fff;}.vbtn:active{opacity:.8;}
+
+/* ── PERFIL ── */
+.phdr{background:linear-gradient(160deg,var(--v),#1a3d1b);padding:28px 20px 22px;color:#fff;text-align:center;}
+.pav{width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 10px;}
+.pname{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;}.pemail{font-size:13px;opacity:.75;margin-top:3px;}
+.pstats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:#e8e8e0;border-radius:16px;margin:14px;overflow:hidden;}
+.pst{background:#fff;padding:16px 10px;text-align:center;}
+.psnum{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--v);}.pslbl{font-size:11px;color:var(--gr);margin-top:3px;}
+.mitem{display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer;border-bottom:1px solid #f0f0ea;}
+.mitem:active{background:#f5f5f0;}
+.micon{width:40px;height:40px;border-radius:12px;background:#f0f7f0;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.mtitle{font-size:15px;font-weight:600;}.msub{font-size:12px;color:var(--gr);}
+.logbtn{margin:14px;width:calc(100% - 28px);padding:14px;background:#FEE2E2;color:var(--ro);border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-appearance:none;}
+.missionbox{margin:0 14px 12px;background:#f0f7f0;border-radius:14px;padding:16px;}
+.missiont{font-size:13px;font-weight:700;color:var(--v);margin-bottom:6px;}.missionx{font-size:13px;color:#2a2a2a;line-height:1.6;}
+
+/* ── DIARIO ── */
+.dentry{margin:0 14px 10px;background:#fff;border-radius:14px;border:1.5px solid #e8e8e0;padding:14px;}
+.dmeta{display:flex;justify-content:space-between;margin-bottom:7px;}
+.dplant{font-size:13px;font-weight:600;color:var(--v);}.ddate{font-size:11px;color:var(--gr);}
+.dnote{font-size:14px;color:#2a2a2a;line-height:1.5;}
+.dhealth{display:flex;align-items:center;gap:6px;margin-top:7px;}
+.dhl{font-size:11px;color:var(--gr);}.dhn{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--v);}
+
+/* ── MODAL ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal.on{opacity:1;pointer-events:all;}
+.modalbox{background:#fff;border-radius:24px 24px 0 0;padding:22px 20px 44px;width:100%;max-width:430px;transform:translateY(40px);transition:transform .32s cubic-bezier(.22,1,.36,1);max-height:90vh;overflow-y:auto;}
+.modal.on .modalbox{transform:translateY(0);}
+.mhandle{width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 18px;}
+.mtitle{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;margin-bottom:14px;}
+.mfld{margin-bottom:14px;}
+.mfl{font-size:13px;font-weight:600;color:#1a1a1a;margin-bottom:6px;display:block;}
+.minp{width:100%;padding:14px 16px;border:1.5px solid #ddd;border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;outline:none;-webkit-appearance:none;appearance:none;color:#1a1a1a;}
+.msel{width:100%;padding:14px 16px;border:1.5px solid #ddd;border-radius:12px;font-size:15px;font-family:'DM Sans',sans-serif;background:#fff;outline:none;-webkit-appearance:none;appearance:none;color:#1a1a1a;}
+.epgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+.epopt{font-size:24px;width:44px;height:44px;border-radius:10px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#f5f5f0;}
+.epopt.sel{border-color:var(--v);background:#e8f5e9;}
+.rngrow{display:flex;align-items:center;gap:12px;}
+.rngrow input{flex:1;accent-color:var(--v);}
+.rngval{font-family:'Space Mono',monospace;font-size:15px;font-weight:700;color:var(--v);width:38px;text-align:center;}
+.mbtn{display:block;width:100%;padding:15px;background:var(--v);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;-webkit-appearance:none;}
+.mbtn:active{opacity:.85;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a1a;color:#fff;padding:12px 22px;border-radius:50px;font-size:14px;font-weight:600;z-index:9998;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:92%;text-align:center;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="sp-leaf">🌿</div>
+  <div class="sp-title">EcoHuella</div>
+  <div class="sp-sub">Tu comunidad · Tu planeta · Tu huella</div>
+  <div class="sp-bar"><div class="sp-fill"></div></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast-msg"></div>
+
+<!-- ════ AUTH ════ -->
+<div id="pg-auth">
+  <div class="alogo">
+    <div style="font-size:56px;animation:float 2.5s ease-in-out infinite">🌱</div>
+    <h1>EcoHuella</h1>
+    <p>Tu comunidad · Tu planeta · Tu huella</p>
+  </div>
+  <div class="acard">
+    <div class="atabs">
+      <button class="atab act" id="tab-login" onclick="showTab('login')">Iniciar sesión</button>
+      <button class="atab" id="tab-reg" onclick="showTab('reg')">Registrarse</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="apanel act" id="panel-login">
+      <div class="errmsg" id="err-login"></div>
+      <div class="fld">
+        <label>Correo electrónico</label>
+        <input type="text" id="f-li-em" placeholder="tucorreo@email.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="fld">
+        <label>Contraseña</label>
+        <input type="password" id="f-li-pw" placeholder="Tu contraseña" autocomplete="off">
+      </div>
+      <button class="abtn" id="btn-login" onclick="accionLogin()">✅ Iniciar sesión</button>
+    </div>
+
+    <!-- REGISTRO -->
+    <div class="apanel" id="panel-reg">
+      <div class="errmsg" id="err-reg"></div>
+      <div class="fld">
+        <label>Nombre completo</label>
+        <input type="text" id="f-re-nm" placeholder="Tu nombre" autocomplete="off" autocorrect="off" autocapitalize="words">
+      </div>
+      <div class="fld">
+        <label>Correo electrónico</label>
+        <input type="text" id="f-re-em" placeholder="tucorreo@email.com" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      </div>
+      <div class="fld">
+        <label>Contraseña (mín. 6 caracteres)</label>
+        <input type="password" id="f-re-pw" placeholder="Crea tu contraseña" autocomplete="off">
+      </div>
+      <button class="abtn" id="btn-reg" onclick="accionRegistro()">🌱 Crear mi cuenta</button>
+    </div>
+
+    <div style="margin-top:14px;text-align:center;font-size:12px;color:#aaa;">¿Solo quieres probar?</div>
+    <button class="abtn sec" onclick="accionDemo()">👀 Entrar en modo demo</button>
+  </div>
+</div>
+
+<!-- ════ MAIN ════ -->
+<div id="pg-main">
+  <div class="hdr">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="hav">🌿</div>
+      <div><div class="hgr">Buenos días,</div><div class="hnm" id="usr-nombre">Ecohabitante</div></div>
+    </div>
+    <button class="nbtn" onclick="irA('plantas')">🔔<span class="ndot"></span></button>
+  </div>
+  <div class="pgcontent" id="page-content"></div>
+  <nav class="bnav">
+    <div class="ni act" id="ni-home" onclick="irA('home')"><span class="icon">🏡</span><span class="lbl">Inicio</span></div>
+    <div class="ni" id="ni-plantas" onclick="irA('plantas')"><span class="icon">🌿</span><span class="lbl">Plantas</span></div>
+    <div class="ni" id="ni-diag" onclick="irA('diag')"><span class="icon">🔬</span><span class="lbl">Diagnóstico</span></div>
+    <div class="ni" id="ni-com" onclick="irA('com')"><span class="icon">🤝</span><span class="lbl">Comunidad</span></div>
+    <div class="ni" id="ni-perfil" onclick="irA('perfil')"><span class="icon">👤</span><span class="lbl">Perfil</span></div>
+  </nav>
+</div>
+
+<!-- ════ MODAL PLANTA ════ -->
+<div class="modal" id="modal-planta">
+  <div class="modalbox">
+    <div class="mhandle"></div>
+    <div class="mtitle">🌱 Agregar Planta</div>
+    <div class="mfld">
+      <label class="mfl">Emoji de tu planta</label>
+      <div class="epgrid" id="epgrid">
+        <div class="epopt sel" data-e="🌵" onclick="selEmoji(this)">🌵</div>
+        <div class="epopt" data-e="🌺" onclick="selEmoji(this)">🌺</div>
+        <div class="epopt" data-e="🌻" onclick="selEmoji(this)">🌻</div>
+        <div class="epopt" data-e="🌹" onclick="selEmoji(this)">🌹</div>
+        <div class="epopt" data-e="🌿" onclick="selEmoji(this)">🌿</div>
+        <div class="epopt" data-e="🍃" onclick="selEmoji(this)">🍃</div>
+        <div class="epopt" data-e="🌱" onclick="selEmoji(this)">🌱</div>
+        <div class="epopt" data-e="🎋" onclick="selEmoji(this)">🎋</div>
+        <div class="epopt" data-e="🌴" onclick="selEmoji(this)">🌴</div>
+        <div class="epopt" data-e="🍀" onclick="selEmoji(this)">🍀</div>
+        <div class="epopt" data-e="🌾" onclick="selEmoji(this)">🌾</div>
+        <div class="epopt" data-e="🎍" onclick="selEmoji(this)">🎍</div>
+      </div>
+    </div>
+    <div class="mfld"><label class="mfl">Nombre de la planta</label><input class="minp" type="text" id="m-pnm" placeholder="Ej: Mi Cactus Favorito" autocomplete="off"></div>
+    <div class="mfld"><label class="mfl">Especie (opcional)</label><input class="minp" type="text" id="m-psp" placeholder="Ej: Mammillaria gracilis" autocomplete="off"></div>
+    <div class="mfld"><label class="mfl">Tipo</label>
+      <select class="msel" id="m-pty">
+        <option>Interior</option><option>Exterior</option><option>Cactus / Suculenta</option>
+        <option>Frutal</option><option>Aromática / Medicinal</option><option>Ornamental</option><option>Huerto / Verdura</option>
+      </select>
+    </div>
+    <div class="mfld"><label class="mfl">Salud inicial</label>
+      <div class="rngrow"><input type="range" min="10" max="100" value="75" id="m-phl" oninput="document.getElementById('m-phv').textContent=this.value+'%'"><div class="rngval" id="m-phv">75%</div></div>
+    </div>
+    <div class="mfld"><label class="mfl">Nota inicial (opcional)</label><input class="minp" type="text" id="m-pnt" placeholder="¿Cómo está tu planta hoy?" autocomplete="off"></div>
+    <button class="mbtn" onclick="guardarPlanta()">💾 Guardar Planta</button>
+  </div>
+</div>
+
+<!-- ════ MODAL DIARIO ════ -->
+<div class="modal" id="modal-diario">
+  <div class="modalbox">
+    <div class="mhandle"></div>
+    <div class="mtitle">📔 Nueva Entrada</div>
+    <div class="mfld"><label class="mfl">Planta</label><select class="msel" id="m-dplanta"></select></div>
+    <div class="mfld"><label class="mfl">Actividad</label>
+      <select class="msel" id="m-dact">
+        <option>🚿 Riego</option><option>✂️ Poda</option><option>🌱 Abono / Fertilización</option>
+        <option>🪴 Trasplante</option><option>🐛 Tratamiento de plagas</option>
+        <option>☀️ Cambio de ubicación</option><option>💪 Recuperación notable</option><option>📷 Observación general</option>
+      </select>
+    </div>
+    <div class="mfld"><label class="mfl">Salud actual</label>
+      <div class="rngrow"><input type="range" min="10" max="100" value="75" id="m-dhl" oninput="document.getElementById('m-dhv').textContent=this.value+'%'"><div class="rngval" id="m-dhv">75%</div></div>
+    </div>
+    <div class="mfld"><label class="mfl">Observaciones</label><input class="minp" type="text" id="m-dnt" placeholder="¿Qué notaste hoy?" autocomplete="off"></div>
+    <button class="mbtn" onclick="guardarDiario()">💾 Guardar Entrada</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// BASE DE DATOS — objetos JavaScript puros
+// Sin localStorage, sin sql.js, sin WASM
+// Funciona en cualquier visor web
+// ════════════════════════════════════════════
+var DATOS = {
+  usuarios: [],
+  plantas: [],
+  diario: [],
+  diags: [],
+  nextId: { u: 1, p: 1, d: 1, g: 1 }
+};
+
+function nuevoId(tipo) {
+  var id = DATOS.nextId[tipo];
+  DATOS.nextId[tipo] = id + 1;
+  return id;
+}
+
+function fechaHoy() {
+  var d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+// Guardar silencioso (respaldo)
+function guardarStorage() {
+  try { localStorage.setItem('eco5', JSON.stringify(DATOS)); } catch(e) {}
+  try { sessionStorage.setItem('eco5', JSON.stringify(DATOS)); } catch(e) {}
+}
+
+// Cargar desde storage si hay datos previos
+function cargarStorage() {
+  var raw = null;
+  try { raw = localStorage.getItem('eco5'); } catch(e) {}
+  if (!raw) { try { raw = sessionStorage.getItem('eco5'); } catch(e) {} }
+  if (raw) {
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.usuarios)) {
+        DATOS = parsed;
+      }
+    } catch(e) {}
+  }
+}
+
+// ════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════
+var USUARIO_ACTUAL = null;
+var PANTALLA_ACTUAL = 'home';
+var EMOJI_SEL = '🌵';
+var camStream = null;
+var imagenBase64 = null;
+
+var TIPS = [
+  'Las plantas de interior liberan O₂ y absorben CO₂: tus aliadas para un hogar saludable.',
+  'El riego temprano reduce la evaporación hasta un 40% comparado con el mediodía.',
+  'La albahaca repele insectos naturalmente, sin pesticidas.',
+  'Un suelo bien drenado es más importante que el riego frecuente.',
+  'Hojas amarillas suelen indicar exceso de agua, no falta de ella.',
+  'Girar tu planta 90° cada semana asegura crecimiento uniforme.',
+  'El compost casero reduce residuos orgánicos del hogar hasta un 30%.',
+  'Lavar las hojas con agua tibia mejora la fotosíntesis un 15%.',
+  'Un jardín de 5m² puede producir hasta 20kg de verduras al año.',
+  'Las flores atraen polinizadores que benefician todo el ecosistema.'
+];
+
+// ════════════════════════════════════════════
+// INICIO — sin librerías externas
+// ════════════════════════════════════════════
+cargarStorage();
+
+setTimeout(function() {
+  var sp = document.getElementById('splash');
+  if (sp) {
+    sp.classList.add('hide');
+    setTimeout(function() {
+      if (sp.parentNode) sp.parentNode.removeChild(sp);
+    }, 700);
+  }
+}, 2300);
+
+// ════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════
+function showTab(t) {
+  document.getElementById('tab-login').classList.toggle('act', t === 'login');
+  document.getElementById('tab-reg').classList.toggle('act', t === 'reg');
+  document.getElementById('panel-login').classList.toggle('act', t === 'login');
+  document.getElementById('panel-reg').classList.toggle('act', t === 'reg');
+  ocultarError('err-login');
+  ocultarError('err-reg');
+}
+
+function mostrarError(id, msg) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('show');
+}
+
+function ocultarError(id) {
+  var el = document.getElementById(id);
+  if (el) { el.textContent = ''; el.classList.remove('show'); }
+}
+
+function leerCampo(id) {
+  var el = document.getElementById(id);
+  return el ? (el.value || '').trim() : '';
+}
+
+function accionLogin() {
+  ocultarError('err-login');
+  var em = leerCampo('f-li-em');
+  var pw = leerCampo('f-li-pw');
+
+  if (!em) { mostrarError('err-login', 'Ingresa tu correo electrónico'); return; }
+  if (!pw) { mostrarError('err-login', 'Ingresa tu contraseña'); return; }
+
+  // Buscar usuario
+  var found = null;
+  for (var i = 0; i < DATOS.usuarios.length; i++) {
+    if (DATOS.usuarios[i].email.toLowerCase() === em.toLowerCase()) {
+      found = DATOS.usuarios[i];
+      break;
+    }
+  }
+
+  if (!found) { mostrarError('err-login', 'No existe cuenta con ese correo. ¿Ya te registraste?'); return; }
+  if (found.password !== pw) { mostrarError('err-login', 'Contraseña incorrecta'); return; }
+
+  entrarApp(found);
+}
+
+function accionRegistro() {
+  ocultarError('err-reg');
+  var nm = leerCampo('f-re-nm');
+  var em = leerCampo('f-re-em');
+  var pw = leerCampo('f-re-pw');
+
+  if (!nm) { mostrarError('err-reg', 'Ingresa tu nombre completo'); return; }
+  if (!em) { mostrarError('err-reg', 'Ingresa tu correo electrónico'); return; }
+  if (em.indexOf('@') < 0 || em.indexOf('.') < 0) { mostrarError('err-reg', 'El correo debe tener @ y punto (ej: ali@gmail.com)'); return; }
+  if (!pw) { mostrarError('err-reg', 'Crea una contraseña'); return; }
+  if (pw.length < 6) { mostrarError('err-reg', 'La contraseña debe tener mínimo 6 caracteres'); return; }
+
+  // Verificar duplicado
+  for (var i = 0; i < DATOS.usuarios.length; i++) {
+    if (DATOS.usuarios[i].email.toLowerCase() === em.toLowerCase()) {
+      mostrarError('err-reg', 'Ya existe una cuenta con ese correo. Inicia sesión.');
+      return;
+    }
+  }
+
+  // Crear usuario
+  var u = { id: nuevoId('u'), nombre: nm, email: em.toLowerCase(), password: pw, fecha: fechaHoy() };
+  DATOS.usuarios.push(u);
+  guardarStorage();
+
+  mostrarToast('¡Cuenta creada! Bienvenido/a ' + nm.split(' ')[0] + ' 🌱');
+  entrarApp(u);
+}
+
+function accionDemo() {
+  // Buscar o crear usuario demo
+  var demo = null;
+  for (var i = 0; i < DATOS.usuarios.length; i++) {
+    if (DATOS.usuarios[i].email === 'demo@ecohuella.app') { demo = DATOS.usuarios[i]; break; }
+  }
+  if (!demo) {
+    demo = { id: nuevoId('u'), nombre: 'Usuario Demo', email: 'demo@ecohuella.app', password: 'demo123', fecha: fechaHoy() };
+    DATOS.usuarios.push(demo);
+    // Plantas demo
+    var p1 = { id: nuevoId('p'), uid: demo.id, emoji: '🌵', nombre: 'Mi Cactus', especie: 'Cactus mammillaria', tipo: 'Cactus / Suculenta', salud: 85, fecha: fechaHoy() };
+    var p2 = { id: nuevoId('p'), uid: demo.id, emoji: '🌿', nombre: 'Pothos Verde', especie: 'Epipremnum aureum', tipo: 'Interior', salud: 72, fecha: fechaHoy() };
+    DATOS.plantas.push(p1, p2);
+    DATOS.diario.push({ id: nuevoId('d'), planta_id: p1.id, uid: demo.id, actividad: '🚿 Riego', salud: 85, nota: 'Regado con agua sin cloro', fecha: fechaHoy() });
+    guardarStorage();
+  }
+  mostrarToast('Entrando en modo demo 👀');
+  entrarApp(demo);
+}
+
+function entrarApp(u) {
+  USUARIO_ACTUAL = u;
+  document.getElementById('pg-auth').style.display = 'none';
+  document.getElementById('pg-main').classList.add('on');
+  document.getElementById('usr-nombre').textContent = u.nombre.split(' ')[0];
+  irA('home');
+}
+
+function cerrarSesion() {
+  detenerCamara();
+  USUARIO_ACTUAL = null;
+  document.getElementById('pg-main').classList.remove('on');
+  document.getElementById('pg-auth').style.display = 'flex';
+  document.getElementById('f-li-em').value = '';
+  document.getElementById('f-li-pw').value = '';
+  showTab('login');
+  mostrarToast('Sesión cerrada');
+}
+
+// ════════════════════════════════════════════
+// NAVEGACIÓN
+// ════════════════════════════════════════════
+function irA(pantalla) {
+  PANTALLA_ACTUAL = pantalla;
+  var ids = ['home','plantas','diag','com','perfil'];
+  ids.forEach(function(id) {
+    var el = document.getElementById('ni-' + id);
+    if (el) el.classList.toggle('act', id === pantalla);
+  });
+  if (pantalla !== 'diag') detenerCamara();
+  var c = document.getElementById('page-content');
+  if (!c) return;
+  switch (pantalla) {
+    case 'home':    c.innerHTML = renderHome(); break;
+    case 'plantas': c.innerHTML = renderPlantas(); break;
+    case 'diag':    c.innerHTML = renderDiag(); break;
+    case 'com':     c.innerHTML = renderCom(); break;
+    case 'perfil':  c.innerHTML = renderPerfil(); break;
+  }
+}
+
+// ════════════════════════════════════════════
+// HELPERS DE BD
+// ════════════════════════════════════════════
+function misplantas() {
+  var r = [];
+  for (var i = 0; i < DATOS.plantas.length; i++) {
+    if (DATOS.plantas[i].uid === USUARIO_ACTUAL.id) r.push(DATOS.plantas[i]);
+  }
+  return r;
+}
+
+function plantaPorId(id) {
+  for (var i = 0; i < DATOS.plantas.length; i++) {
+    if (DATOS.plantas[i].id === id) return DATOS.plantas[i];
+  }
+  return null;
+}
+
+function diarioDeUsuario(lim) {
+  var r = [];
+  for (var i = 0; i < DATOS.diario.length; i++) {
+    if (DATOS.diario[i].uid === USUARIO_ACTUAL.id) r.push(DATOS.diario[i]);
+  }
+  r.sort(function(a,b){ return b.id - a.id; });
+  return r.slice(0, lim || 8);
+}
+
+function diarioDePlanta(pid, lim) {
+  var r = [];
+  for (var i = 0; i < DATOS.diario.length; i++) {
+    if (DATOS.diario[i].planta_id === pid) r.push(DATOS.diario[i]);
+  }
+  r.sort(function(a,b){ return b.id - a.id; });
+  return r.slice(0, lim || 5);
+}
+
+function diagsDeUsuario(lim) {
+  var r = [];
+  for (var i = 0; i < DATOS.diags.length; i++) {
+    if (DATOS.diags[i].uid === USUARIO_ACTUAL.id) r.push(DATOS.diags[i]);
+  }
+  r.sort(function(a,b){ return b.id - a.id; });
+  return r.slice(0, lim || 6);
+}
+
+function actualizarSalud(pid, s) {
+  for (var i = 0; i < DATOS.plantas.length; i++) {
+    if (DATOS.plantas[i].id === pid) { DATOS.plantas[i].salud = s; break; }
+  }
+  guardarStorage();
+}
+
+function borrarPlantaDB(pid) {
+  DATOS.plantas = DATOS.plantas.filter(function(p){ return p.id !== pid; });
+  DATOS.diario  = DATOS.diario.filter(function(d){ return d.planta_id !== pid; });
+  DATOS.diags   = DATOS.diags.filter(function(d){ return d.planta_id !== pid; });
+  guardarStorage();
+}
+
+// ════════════════════════════════════════════
+// HOME
+// ════════════════════════════════════════════
+function renderHome() {
+  var pl = misplantas();
+  var tip = TIPS[new Date().getDay() % TIPS.length];
+  var eco = 0;
+  if (pl.length) { pl.forEach(function(p){ eco += p.salud; }); eco = Math.round(eco / pl.length); }
+
+  var alts = '';
+  for (var i = 0; i < Math.min(pl.length, 3); i++) {
+    var p = pl[i];
+    var cls = p.salud < 40 ? 'urg' : p.salud < 65 ? 'hoy' : 'bien';
+    var txt = cls === 'urg' ? '¡Urgente!' : cls === 'hoy' ? 'Hoy' : 'Bien';
+    alts += '<div class="alcard"><div class="alicon">💧</div><div><div style="font-size:14px;font-weight:600">' + p.emoji + ' ' + p.nombre + '</div><div style="font-size:12px;color:var(--gr)">Riego recomendado</div></div><span class="albadge ' + cls + '">' + txt + '</span></div>';
+  }
+  if (!alts) alts = '<div class="empty"><div class="empty-i">✅</div><div class="empty-t">Sin alertas pendientes</div></div>';
+
+  return '<div class="hero">' +
+    '<h2>¡Hola, ' + USUARIO_ACTUAL.nombre.split(' ')[0] + '! 🌿</h2>' +
+    '<p>Tu huella ambiental importa cada día que cuidas tu entorno verde.</p>' +
+    '<div class="srow">' +
+    '<div class="sbadge"><span class="snum">' + eco + '%</span><span class="slbl">Salud prom.</span></div>' +
+    '<div class="sbadge"><span class="snum">' + pl.length + '</span><span class="slbl">Plantas</span></div>' +
+    '</div></div>' +
+    '<div class="sec">Acciones rápidas</div>' +
+    '<div class="qgrid">' +
+    '<div class="qcard" onclick="abrirModalPlanta()"><div class="qicon">🌱</div><div class="qtitle">Agregar planta</div><div class="qsub">Registra una nueva</div></div>' +
+    '<div class="qcard" onclick="irA(\'diag\')"><div class="qicon">🔬</div><div class="qtitle">Diagnóstico IA</div><div class="qsub">Analiza con cámara</div></div>' +
+    '<div class="qcard" onclick="abrirModalDiario()"><div class="qicon">📔</div><div class="qtitle">Diario</div><div class="qsub">Nueva entrada</div></div>' +
+    '<div class="qcard" onclick="irA(\'com\')"><div class="qicon">🤝</div><div class="qtitle">Viveros</div><div class="qsub">Contacta expertos</div></div>' +
+    '</div>' +
+    '<div class="sec">Mis plantas</div>' + renderFilaplantas(pl) +
+    '<div class="sec">Alertas de cuidado</div><div class="allist">' + alts + '</div>' +
+    '<div class="sec">💡 Dato curioso del día</div>' +
+    '<div class="tipcard"><div class="tiplbl">EcoHuella te informa</div><div class="tiptxt">' + tip + '</div></div>';
+}
+
+function renderFilaplantas(pl) {
+  if (!pl.length) return '<div class="empty"><div class="empty-i">🌵</div><div class="empty-t">Aún no tienes plantas.<br>¡Agrega tu primera!</div><br><button class="abtn" style="width:auto;padding:12px 24px;display:block;margin:0 auto;font-size:14px" onclick="abrirModalPlanta()">+ Agregar planta</button></div>';
+  var html = '<div class="prow">';
+  pl.forEach(function(p) {
+    html += '<div class="pcard" onclick="verPlanta(' + p.id + ')">' +
+      '<div class="pem">' + p.emoji + '</div>' +
+      '<div class="pnm">' + p.nombre + '</div>' +
+      '<div class="psp">' + (p.especie || p.tipo || 'Sin especie') + '</div>' +
+      '<div class="hbar"><div class="hbar-f" style="width:' + p.salud + '%"></div></div>' +
+      '<div class="hbar-t">Salud: ' + p.salud + '%</div></div>';
+  });
+  return html + '</div>';
+}
+
+// ════════════════════════════════════════════
+// PLANTAS
+// ════════════════════════════════════════════
+function renderPlantas() {
+  var pl = misplantas();
+  var di = diarioDeUsuario(8);
+  var dhtml = '';
+  if (di.length) {
+    di.forEach(function(e) {
+      var p = plantaPorId(e.planta_id);
+      dhtml += '<div class="dentry"><div class="dmeta"><div class="dplant">' + (p ? p.emoji + ' ' + p.nombre : '🌿') + '</div><div class="ddate">' + e.fecha + '</div></div><div class="dnote">' + e.actividad + ' — ' + (e.nota || 'Sin obs.') + '</div><div class="dhealth"><div class="dhl">Salud:</div><div class="dhn">' + e.salud + '%</div></div></div>';
+    });
+  } else {
+    dhtml = '<div class="empty"><div class="empty-i">📔</div><div class="empty-t">Sin entradas en el diario aún</div></div>';
+  }
+  return '<div style="padding:14px;display:flex;justify-content:space-between;align-items:center">' +
+    '<div style="font-family:\'Playfair Display\',serif;font-size:22px;font-weight:700">Mis Plantas 🌿</div>' +
+    '<button class="abtn" style="width:auto;padding:9px 18px;font-size:13px" onclick="abrirModalPlanta()">+ Agregar</button>' +
+    '</div>' +
+    renderFilaplantas(pl) +
+    '<div style="margin-top:14px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px 8px">' +
+    '<div class="sec" style="padding:0">Diario de crecimiento</div>' +
+    '<button onclick="abrirModalDiario()" style="background:transparent;border:1.5px solid var(--v);color:var(--v);border-radius:50px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:\'DM Sans\',sans-serif">+ Entrada</button>' +
+    '</div>' + dhtml + '</div>';
+}
+
+// ════════════════════════════════════════════
+// DIAGNÓSTICO
+// ════════════════════════════════════════════
+function renderDiag() {
+  var pl = misplantas();
+  var hist = diagsDeUsuario(6);
+  var popts = '<option value="">🌿 General (sin planta)</option>';
+  pl.forEach(function(p){ popts += '<option value="' + p.id + '">' + p.emoji + ' ' + p.nombre + '</option>'; });
+  var hhtml = '';
+  if (hist.length) {
+    hist.forEach(function(d){ hhtml += '<div class="dentry"><div class="dmeta"><div class="dplant">🔬 ' + (d.condicion || 'Diagnóstico') + '</div><div class="ddate">' + d.fecha + '</div></div><div class="dnote" style="font-size:12px;color:var(--gr)">Salud estimada: <strong style="color:var(--v)">' + d.salud + '%</strong></div></div>'; });
+  } else {
+    hhtml = '<div class="empty"><div class="empty-i">🔬</div><div class="empty-t">Sin diagnósticos guardados aún</div></div>';
+  }
+
+  return '<div style="padding:14px 14px 4px;font-family:\'Playfair Display\',serif;font-size:22px;font-weight:700">Diagnóstico 🔬</div>' +
+    '<div class="aibadge"><div class="aidot"></div>Claude AI Vision · Botánico experto</div>' +
+    (pl.length ? '<div style="padding:0 14px 10px"><label class="mfl">Planta a diagnosticar</label><select class="msel" id="diag-planta">' + popts + '</select></div>' : '') +
+    '<div class="dwrap">' +
+    '<div class="camzone" id="camzone">' +
+    '<div class="camph" id="camph"><div class="ci">📷</div><div class="ct">Activa la cámara</div><div class="cs">Apunta a tu planta para diagnóstico real con IA botánica</div></div>' +
+    '<video id="camvid" autoplay playsinline muted style="display:none;width:100%;max-height:320px;object-fit:cover"></video>' +
+    '<canvas id="camcanvas" style="display:none"></canvas>' +
+    '<img id="camprev" style="display:none;width:100%;max-height:320px;object-fit:cover" alt="">' +
+    '<div class="vfover" id="vfover" style="display:none"><div class="vfc tl"></div><div class="vfc tr"></div><div class="vfc bl"></div><div class="vfc br"></div><div class="vfline"></div><div class="vfbadge">🔬 ESCANEANDO</div></div>' +
+    '</div>' +
+    '<div class="camctrl" id="ctrl0"><button class="cbtn cb-c" onclick="abrirCamara()">📷 Cámara</button><button class="cbtn cb-g" onclick="document.getElementById(\'filegal0\').click()">🖼️ Galería</button><input type="file" id="filegal0" accept="image/*" style="display:none" onchange="cargarGaleria(event)"></div>' +
+    '<div class="camctrl" id="ctrl1" style="display:none"><button class="cbtn cb-x" onclick="detenerCamara()">✕</button><button class="cbtn cb-s" onclick="tomarFoto()">📸 Capturar</button><button class="cbtn cb-g" onclick="document.getElementById(\'filegal1\').click()">🖼️</button><input type="file" id="filegal1" accept="image/*" style="display:none" onchange="cargarGaleria(event)"></div>' +
+    '<div class="camctrl" id="ctrl2" style="display:none"><button class="cbtn cb-r" onclick="repetirFoto()">🔄 Retomar</button><button class="cbtn cb-a" onclick="analizarConIA()">🤖 Analizar con IA</button></div>' +
+    '<div class="aiload" id="ailoader">' +
+    '<div class="aispin">🌿</div><div class="ait">Analizando tu planta...</div>' +
+    '<div class="ais">Claude AI procesa la imagen y genera tu diagnóstico botánico</div>' +
+    '<div class="aisteps"><div class="aistep" id="step0">📷 Procesando imagen</div><div class="aistep" id="step1">🔍 Detectando especie y síntomas</div><div class="aistep" id="step2">🩺 Generando diagnóstico completo</div></div>' +
+    '</div>' +
+    '<div id="resultado-diag"></div>' +
+    '</div>' +
+    '<div class="sec">Historial de diagnósticos</div>' + hhtml;
+}
+
+// ── CÁMARA ──
+function mostrarCtrl(n) {
+  for (var i = 0; i <= 2; i++) {
+    var el = document.getElementById('ctrl' + i);
+    if (el) el.style.display = (i === n) ? 'flex' : 'none';
+  }
+}
+
+function setVisible(id, visible) {
+  var el = document.getElementById(id);
+  if (el) el.style.display = visible ? (id === 'vfover' ? 'block' : 'flex') : 'none';
+}
+
+async function abrirCamara() {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+    var vid = document.getElementById('camvid');
+    if (!vid) return;
+    vid.srcObject = camStream;
+    vid.style.display = 'block';
+    setVisible('camph', false);
+    setVisible('vfover', true);
+    mostrarCtrl(1);
+  } catch(e) {
+    mostrarToast('Sin acceso a cámara. Usa Galería para subir una foto.');
+  }
+}
+
+function detenerCamara() {
+  if (camStream) { camStream.getTracks().forEach(function(t){ t.stop(); }); camStream = null; }
+  var vid = document.getElementById('camvid'); if (vid) vid.style.display = 'none';
+  var prev = document.getElementById('camprev'); if (prev) prev.style.display = 'none';
+  setVisible('camph', true);
+  setVisible('vfover', false);
+  mostrarCtrl(0);
+  imagenBase64 = null;
+}
+
+function tomarFoto() {
+  var vid = document.getElementById('camvid');
+  var can = document.getElementById('camcanvas');
+  if (!vid || !can) return;
+  can.width = vid.videoWidth || 640;
+  can.height = vid.videoHeight || 480;
+  can.getContext('2d').drawImage(vid, 0, 0, can.width, can.height);
+  mostrarPreview(can.toDataURL('image/jpeg', 0.88));
+  if (camStream) { camStream.getTracks().forEach(function(t){ t.stop(); }); camStream = null; }
+}
+
+function cargarGaleria(e) {
+  var f = e.target.files[0];
+  if (!f) return;
+  var r = new FileReader();
+  r.onload = function(ev) { mostrarPreview(ev.target.result); };
+  r.readAsDataURL(f);
+  e.target.value = '';
+}
+
+function mostrarPreview(dataUrl) {
+  imagenBase64 = dataUrl.split(',')[1];
+  var prev = document.getElementById('camprev');
+  var vid = document.getElementById('camvid');
+  if (prev) { prev.src = dataUrl; prev.style.display = 'block'; }
+  if (vid) vid.style.display = 'none';
+  setVisible('camph', false);
+  setVisible('vfover', false);
+  mostrarCtrl(2);
+}
+
+function repetirFoto() {
+  imagenBase64 = null;
+  var prev = document.getElementById('camprev'); if (prev) prev.style.display = 'none';
+  setVisible('camph', true);
+  mostrarCtrl(0);
+}
+
+// ── ANÁLISIS IA ──
+async function analizarConIA() {
+  if (!imagenBase64) { mostrarToast('Primero toma o sube una foto'); return; }
+  var selEl = document.getElementById('diag-planta');
+  var pid = selEl ? parseInt(selEl.value) || null : null;
+  var planta = pid ? plantaPorId(pid) : null;
+
+  mostrarCtrl(-1);
+  var loader = document.getElementById('ailoader'); if (loader) loader.classList.add('on');
+  var resDiv = document.getElementById('resultado-diag'); if (resDiv) resDiv.innerHTML = '';
+
+  var stepIdx = 0;
+  var stepsIds = ['step0','step1','step2'];
+  var stepTimer = setInterval(function() {
+    if (stepIdx > 0) {
+      var prev = document.getElementById(stepsIds[stepIdx - 1]);
+      if (prev && !prev.classList.contains('ok')) { prev.classList.remove('cur'); prev.textContent = '✅ ' + prev.textContent.slice(3); prev.classList.add('ok'); }
+    }
+    if (stepIdx < stepsIds.length) {
+      var cur = document.getElementById(stepsIds[stepIdx]);
+      if (cur) cur.classList.add('cur');
+      stepIdx++;
+    }
+  }, 1900);
+
+  try {
+    var ctx = planta ? 'Planta: ' + planta.nombre + ' (' + (planta.especie || planta.tipo || 'desconocido') + '), salud registrada: ' + planta.salud + '%.' : 'Análisis general sin planta registrada.';
+    var sys = 'Eres EcoHuella AI, botánico experto con 20 años en diagnóstico fitosanitario y agronomía tropical latinoamericana.\n\nINSTRUCCIONES:\n- Responde SOLO en español\n- Analiza imagen con detalle técnico: color foliar, turgencia, manchas, plagas\n- Proporciona consejos aplicables en Venezuela\n- Si no hay planta clara, analiza la vegetación visible\n\nResponde SOLO con JSON válido sin markdown:\n{"especie_detectada":"","condicion_detectada":"","causa_principal":"","porcentaje_salud":75,"indicadores_positivos":[],"indicadores_negativos":[],"primeros_auxilios":[],"cuidados_preventivos":[],"nivel_urgencia":"bajo","resumen_profesional":""}';
+
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        system: sys,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imagenBase64 } },
+          { type: 'text', text: ctx + '\n\nAnaliza esta imagen botánicamente y da diagnóstico profesional completo.' }
+        ]}]
+      })
+    });
+
+    clearInterval(stepTimer);
+    stepsIds.forEach(function(s) { var el = document.getElementById(s); if (el) { el.classList.remove('cur'); el.classList.add('ok'); } });
+
+    if (!resp.ok) { var ed = await resp.json().catch(function(){ return {}; }); throw new Error((ed.error && ed.error.message) || ('Error ' + resp.status)); }
+    var data = await resp.json();
+    var txt = (data.content && data.content.find(function(c){ return c.type === 'text'; })) ? data.content.find(function(c){ return c.type === 'text'; }).text : '';
+
+    var result;
+    try { result = JSON.parse(txt.replace(/```json|```/g, '').trim()); }
+    catch(e) { result = { especie_detectada:'Planta analizada', condicion_detectada:'Ver análisis', causa_principal:'Análisis IA', porcentaje_salud:70, indicadores_positivos:[], indicadores_negativos:[], primeros_auxilios:['Revisa el análisis a continuación'], cuidados_preventivos:[], nivel_urgencia:'bajo', resumen_profesional:txt }; }
+
+    if (loader) loader.classList.remove('on');
+    var salud = Math.max(10, Math.min(100, parseInt(result.porcentaje_salud) || 70));
+    if (planta) actualizarSalud(planta.id, salud);
+    DATOS.diags.push({ id: nuevoId('g'), uid: USUARIO_ACTUAL.id, planta_id: pid, condicion: result.condicion_detectada || 'Diagnóstico', salud: salud, resultado: JSON.stringify(result), fecha: fechaHoy() });
+    guardarStorage();
+    mostrarResultado(result, planta, salud);
+
+  } catch(err) {
+    clearInterval(stepTimer);
+    if (loader) loader.classList.remove('on');
+    mostrarCtrl(2);
+    mostrarToast('⚠️ Error IA: ' + err.message + ' (Requiere conexión HTTPS)');
+  }
+}
+
+function mostrarResultado(r, planta, salud) {
+  var col = salud >= 75 ? '#2C5F2D' : salud >= 50 ? '#D97706' : '#C0392B';
+  var urgColors = { bajo:'#166534|#F0FDF4', moderado:'#92400E|#FEF3C7', alto:'#9A3412|#FEF2F2', crítico:'#7F1D1D|#FEE2E2' };
+  var parts = (urgColors[r.nivel_urgencia] || urgColors['bajo']).split('|');
+  var tP = (r.indicadores_positivos || []).map(function(t){ return '<span class="dtag tg">✅ ' + t + '</span>'; }).join('');
+  var tN = (r.indicadores_negativos || []).map(function(t){ return '<span class="dtag tr">⚠️ ' + t + '</span>'; }).join('');
+  var ics = ['🩺','💊','🌿','💧','☀️'];
+  var aux = (r.primeros_auxilios || []).map(function(a,i){ return '<div class="axrow"><div class="axic">' + (ics[i]||'🩺') + '</div><div class="axtx">' + a + '</div></div>'; }).join('');
+  var prv = (r.cuidados_preventivos || []).map(function(a){ return '<div class="axrow"><div class="axic">🔮</div><div class="axtx">' + a + '</div></div>'; }).join('');
+  var el = document.getElementById('resultado-diag');
+  if (!el) return;
+  el.innerHTML = '<div class="rh"><div class="rplant">' + (planta ? planta.emoji + ' ' + planta.nombre : '🔬 Análisis Botánico') + '</div><div class="rsp">' + (r.especie_detectada || '') + ' · ' + fechaHoy() + '</div></div>' +
+    '<div class="rscore"><div class="rsnum" style="color:' + col + '">' + salud + '%</div><div class="rslbl">Índice de salud</div>' +
+    '<div style="margin-top:8px"><span style="color:' + parts[0] + ';background:' + parts[1] + ';font-size:12px;font-weight:700;padding:3px 12px;border-radius:50px">Urgencia: ' + (r.nivel_urgencia||'bajo') + '</span></div></div>' +
+    '<div class="rb"><div class="rst">Condición detectada</div><div class="rcond">' + r.condicion_detectada + '</div><div class="rcause">' + r.causa_principal + '</div>' +
+    ((tP||tN) ? '<div class="rst">Indicadores</div>' + tP + tN : '') +
+    '<div class="rst">Primeros auxilios</div>' + aux +
+    (prv ? '<div class="rst">Cuidados preventivos</div>' + prv : '') +
+    '<div class="rst">Análisis profesional completo</div><div class="rfull">' + (r.resumen_profesional||'') + '</div></div>' +
+    '<button class="savebtn" onclick="mostrarToast(\'Diagnóstico guardado ✅\');irA(\'diag\')">Guardar diagnóstico</button>';
+}
+
+// ════════════════════════════════════════════
+// COMUNIDAD
+// ════════════════════════════════════════════
+function renderCom() {
+  var viv = [
+    {e:'🌺',n:'Vivero El Paraíso Verde',esp:'Plantas ornamentales y tropicales',tags:['Ornamentales','Tropicales','Trasplante']},
+    {e:'🌵',n:'Cactus & Suculentas',esp:'Cactáceas y suculentas del desierto',tags:['Cactus','Suculentas','Riego goteo']},
+    {e:'🍀',n:'AgroVerde Profesional',esp:'Agricultura urbana y huertos familiares',tags:['Huertos','Orgánico','Compostaje']},
+    {e:'🌻',n:'Jardines Amazónicos',esp:'Plantas medicinales y aromáticas',tags:['Medicinales','Aromáticas','Natural']},
+    {e:'🌴',n:'Palmas & Follaje LATAM',esp:'Paisajismo y plantas de gran porte',tags:['Paisajismo','Exterior','Grandes']}
+  ];
+  var html = '<div style="padding:14px 14px 4px;font-family:\'Playfair Display\',serif;font-size:22px;font-weight:700">Comunidad 🤝</div>' +
+    '<div class="tipcard" style="margin-bottom:6px"><div class="tiplbl">Red EcoHuella · Viveros Aliados</div><div class="tiptxt">Conecta con expertos botánicos locales para asesoría, trasplantes y beneficios exclusivos.</div></div>' +
+    '<div class="sec">Viveros aliados</div>';
+  viv.forEach(function(v) {
+    html += '<div class="vcrd"><div class="vlogo">' + v.e + '</div><div style="flex:1"><div class="vnm">' + v.n + '</div><div class="vesp">' + v.esp + '</div><div class="vtags">' + v.tags.map(function(t){ return '<span class="vtag">' + t + '</span>'; }).join('') + '</div><div class="vbtns"><button class="vbtn" onclick="mostrarToast(\'Llamando a ' + v.n + '...\')">📞 Llamar</button><button class="vbtn prim" onclick="mostrarToast(\'Abriendo WhatsApp...\')">💬 WhatsApp</button></div></div></div>';
+  });
+  html += '<div class="tipcard" style="margin-top:6px"><div class="tiplbl">🌟 EcoHuella Premium</div><div class="tiptxt">Tele-asesoría botánica en vivo, diagnósticos IA ilimitados y descuentos con todos los viveros aliados.</div></div>';
+  return html;
+}
+
+// ════════════════════════════════════════════
+// PERFIL
+// ════════════════════════════════════════════
+function renderPerfil() {
+  var np = 0, nd = 0, ndi = 0;
+  DATOS.plantas.forEach(function(p){ if(p.uid===USUARIO_ACTUAL.id) np++; });
+  DATOS.diario.forEach(function(d){ if(d.uid===USUARIO_ACTUAL.id) nd++; });
+  DATOS.diags.forEach(function(d){ if(d.uid===USUARIO_ACTUAL.id) ndi++; });
+  return '<div class="phdr"><div class="pav">🌿</div><div class="pname">' + USUARIO_ACTUAL.nombre + '</div><div class="pemail">' + USUARIO_ACTUAL.email + '</div></div>' +
+    '<div class="pstats"><div class="pst"><div class="psnum">' + np + '</div><div class="pslbl">Plantas</div></div><div class="pst"><div class="psnum">' + nd + '</div><div class="pslbl">Entradas</div></div><div class="pst"><div class="psnum">' + ndi + '</div><div class="pslbl">Diagnósticos</div></div></div>' +
+    '<div class="missionbox"><div class="missiont">Misión EcoHuella</div><div class="missionx">Proveer herramientas y conocimientos ambientales que empoderen a las comunidades para gestionar sus recursos de manera responsable, reduciendo el impacto ecológico y fomentando un desarrollo económico equitativo y verde.</div></div>' +
+    '<div class="sec">Configuración</div>' +
+    '<div class="mitem" onclick="mostrarToast(\'Próximamente: editar perfil\')"><div class="micon">✏️</div><div style="flex:1"><div class="mtitle">Editar perfil</div><div class="msub">Nombre y datos personales</div></div><div style="color:var(--gr);font-size:18px">›</div></div>' +
+    '<div class="mitem" onclick="mostrarToast(\'Próximamente: notificaciones push\')"><div class="micon">🔔</div><div style="flex:1"><div class="mtitle">Notificaciones</div><div class="msub">Alertas de riego</div></div><div style="color:var(--gr);font-size:18px">›</div></div>' +
+    '<div class="mitem" onclick="mostrarToast(\'Próximamente: Premium 🌟\')"><div class="micon">🌟</div><div style="flex:1"><div class="mtitle">EcoHuella Premium</div><div class="msub">IA ilimitada y viveros</div></div><div style="color:var(--gr);font-size:18px">›</div></div>' +
+    '<div style="padding:6px 14px;text-align:center;font-size:11px;color:var(--gr)">EcoHuella v4.0 · Claude AI · Venezuela 🇻🇪</div>' +
+    '<button class="logbtn" onclick="cerrarSesion()">Cerrar sesión</button>';
+}
+
+// ════════════════════════════════════════════
+// DETALLE PLANTA
+// ════════════════════════════════════════════
+function verPlanta(pid) {
+  var p = plantaPorId(pid); if (!p) return;
+  var di = diarioDePlanta(pid, 5);
+  var col = p.salud >= 75 ? 'var(--v)' : p.salud >= 50 ? '#D97706' : 'var(--ro)';
+  var dhtml = di.length ? di.map(function(e){ return '<div class="dentry" style="margin:0 0 10px"><div class="dmeta"><div class="dplant">' + e.actividad + '</div><div class="ddate">' + e.fecha + '</div></div><div class="dnote">' + (e.nota||'Sin nota') + '</div><div class="dhealth"><div class="dhl">Salud:</div><div class="dhn">' + e.salud + '%</div></div></div>'; }).join('') :
+    '<div style="padding:12px;font-size:13px;color:var(--gr)">Sin entradas en el diario aún</div>';
+  document.getElementById('page-content').innerHTML =
+    '<div style="padding:14px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">' +
+    '<button onclick="irA(\'plantas\')" style="background:#f0f0ea;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer">‹</button>' +
+    '<div style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700">' + p.emoji + ' ' + p.nombre + '</div></div>' +
+    '<div class="dwrap" style="margin:0 0 14px">' +
+    '<div class="rh"><div class="rplant">' + p.emoji + ' ' + p.nombre + '</div><div class="rsp">' + (p.especie||'') + ' · ' + (p.tipo||'') + '</div></div>' +
+    '<div class="rscore"><div class="rsnum" style="color:' + col + '">' + p.salud + '%</div><div class="rslbl">Índice de salud actual</div></div>' +
+    '<div class="rb">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">' +
+    '<button onclick="irA(\'diag\')" style="padding:12px;background:#f0f7f0;border:none;border-radius:12px;font-size:13px;font-weight:600;color:var(--v);cursor:pointer;font-family:\'DM Sans\',sans-serif">🔬 Diagnosticar</button>' +
+    '<button onclick="abrirDiarioPara(' + p.id + ')" style="padding:12px;background:var(--v);border:none;border-radius:12px;font-size:13px;font-weight:600;color:#fff;cursor:pointer;font-family:\'DM Sans\',sans-serif">📔 Anotar</button>' +
+    '</div><div class="rst">Diario de crecimiento</div>' + dhtml +
+    '<button onclick="confirmarBorrar(' + p.id + ')" style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-size:13px;font-weight:600;color:var(--ro);cursor:pointer;margin-top:8px;font-family:\'DM Sans\',sans-serif">🗑️ Eliminar planta</button>' +
+    '</div></div></div>';
+}
+
+function confirmarBorrar(pid) {
+  if (confirm('¿Eliminar esta planta y su historial?')) {
+    borrarPlantaDB(pid);
+    mostrarToast('Planta eliminada');
+    irA('plantas');
+  }
+}
+
+// ════════════════════════════════════════════
+// MODALES
+// ════════════════════════════════════════════
+function abrirModalPlanta() { document.getElementById('modal-planta').classList.add('on'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('on'); }
+
+function selEmoji(el) {
+  document.querySelectorAll('.epopt').forEach(function(e){ e.classList.remove('sel'); });
+  el.classList.add('sel');
+  EMOJI_SEL = el.dataset.e;
+}
+
+function guardarPlanta() {
+  var nm = (document.getElementById('m-pnm').value || '').trim();
+  if (!nm) { mostrarToast('⚠️ Ingresa un nombre para la planta'); return; }
+  var sp = (document.getElementById('m-psp').value || '').trim();
+  var ty = document.getElementById('m-pty').value;
+  var hl = parseInt(document.getElementById('m-phl').value) || 75;
+  var nt = (document.getElementById('m-pnt').value || '').trim();
+  var p = { id: nuevoId('p'), uid: USUARIO_ACTUAL.id, emoji: EMOJI_SEL, nombre: nm, especie: sp, tipo: ty, salud: hl, fecha: fechaHoy() };
+  DATOS.plantas.push(p);
+  if (nt) { DATOS.diario.push({ id: nuevoId('d'), planta_id: p.id, uid: USUARIO_ACTUAL.id, actividad: '🌱 Registro inicial', salud: hl, nota: nt, fecha: fechaHoy() }); }
+  guardarStorage();
+  document.getElementById('m-pnm').value = '';
+  document.getElementById('m-psp').value = '';
+  document.getElementById('m-pnt').value = '';
+  cerrarModal('modal-planta');
+  mostrarToast(EMOJI_SEL + ' ' + nm + ' agregada exitosamente!');
+  irA(PANTALLA_ACTUAL);
+}
+
+function abrirModalDiario() {
+  var pl = misplantas();
+  if (!pl.length) { mostrarToast('⚠️ Primero agrega una planta'); return; }
+  var sel = document.getElementById('m-dplanta');
+  sel.innerHTML = pl.map(function(p){ return '<option value="' + p.id + '">' + p.emoji + ' ' + p.nombre + '</option>'; }).join('');
+  document.getElementById('modal-diario').classList.add('on');
+}
+
+function abrirDiarioPara(pid) {
+  abrirModalDiario();
+  setTimeout(function() { var s = document.getElementById('m-dplanta'); if (s) s.value = pid; }, 120);
+}
+
+function guardarDiario() {
+  var pid = parseInt(document.getElementById('m-dplanta').value);
+  if (!pid) { mostrarToast('⚠️ Selecciona una planta'); return; }
+  var act = document.getElementById('m-dact').value;
+  var hl = parseInt(document.getElementById('m-dhl').value) || 75;
+  var nt = (document.getElementById('m-dnt').value || '').trim();
+  actualizarSalud(pid, hl);
+  DATOS.diario.push({ id: nuevoId('d'), planta_id: pid, uid: USUARIO_ACTUAL.id, actividad: act, salud: hl, nota: nt, fecha: fechaHoy() });
+  guardarStorage();
+  document.getElementById('m-dnt').value = '';
+  cerrarModal('modal-diario');
+  mostrarToast('Entrada guardada en el diario 📔');
+  irA(PANTALLA_ACTUAL);
+}
+
+// Cerrar modal al tocar afuera
+document.querySelectorAll('.modal').forEach(function(m) {
+  m.addEventListener('click', function(e) { if (e.target === m) m.classList.remove('on'); });
+});
+
+// ════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════
+var toastTimer = null;
+function mostrarToast(msg) {
+  var t = document.getElementById('toast-msg');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('on');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('on'); }, 3200);
+}
+</script>
+</body>
+</html>
